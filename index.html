@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSD Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f; --surface: #181818; --surface2: #222222;
+    --border: #2a2a2a; --border2: #333333; --text: #f0ede8;
+    --muted: #888880; --hint: #555550; --accent: #c8b89a;
+    --accent2: #8fbe9f; --danger: #c87a7a; --danger-bg: #2a1a1a;
+    --pension: #7ab8c8; --pension-bg: #1a252a;
+    --radius: 10px; --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  #login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-box { width: 340px; padding: 2.5rem; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); }
+  .login-logo { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .15em; color: var(--muted); margin-bottom: 2rem; }
+  .login-title { font-size: 22px; font-weight: 300; margin-bottom: 0.25rem; }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+  .login-box input[type=password] { width: 100%; padding: 12px 14px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; outline: none; margin-bottom: 12px; transition: border-color .2s; }
+  .login-box input[type=password]:focus { border-color: var(--accent); }
+  .login-btn { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: var(--radius); color: #0f0f0f; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity .2s; }
+  .login-btn:hover { opacity: .88; }
+  .login-error { font-size: 12px; color: var(--danger); margin-top: 10px; display: none; }
+
+  #app { display: none; min-height: 100vh; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; height: 56px; border-bottom: 0.5px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+  .header-logo { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: .12em; color: var(--accent); }
+  .header-nav { display: flex; gap: 4px; }
+  .nav-btn { padding: 6px 14px; background: transparent; border: none; border-radius: 6px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all .15s; }
+  .nav-btn:hover { color: var(--text); background: var(--surface); }
+  .nav-btn.active { color: var(--text); background: var(--surface2); }
+  .logout-btn { padding: 6px 12px; background: transparent; border: 0.5px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all .15s; }
+  .logout-btn:hover { color: var(--text); border-color: var(--text); }
+
+  .page { display: none; padding: 2.5rem 2rem; max-width: 900px; margin: 0 auto; }
+  .page.active { display: block; }
+  .page-title { font-size: 22px; font-weight: 300; margin-bottom: 0.25rem; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--hint); margin-bottom: 12px; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 2rem 0; }
+
+  .task-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; }
+  .task-card:hover { border-color: var(--border2); }
+  .task-header { display: flex; align-items: flex-start; gap: 14px; padding: 1rem 1.2rem; }
+  .task-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); min-width: 24px; margin-top: 2px; }
+  .task-info { flex: 1; }
+  .task-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+  .task-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .task-badges { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .badge { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .05em; padding: 3px 9px; border-radius: 20px; border: 0.5px solid; }
+  .badge-cat { color: var(--accent); border-color: #3a3020; background: #1e1a10; }
+  .badge-tut { color: var(--danger); border-color: #3a2020; background: var(--danger-bg); }
+  .badge-personal { color: var(--pension); border-color: #1a2a30; background: var(--pension-bg); }
+  .badge-done { color: var(--accent2); border-color: #1a2a20; background: #101a12; }
+
+  .emp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+  .emp-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.2rem; }
+  .emp-name { font-size: 15px; font-weight: 500; margin-bottom: 1rem; }
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: 'DM Mono', monospace; letter-spacing: .04em; }
+  .input-wrap { display: flex; align-items: center; gap: 6px; }
+  .pound { font-size: 13px; color: var(--hint); font-family: 'DM Mono', monospace; }
+  .emp-card input[type=number] { width: 100%; padding: 8px 10px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color .2s; }
+  .emp-card input[type=number]:focus { border-color: var(--accent); }
+  .tag-auto { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 20px; color: var(--accent2); border: 0.5px solid #1a2a20; background: #101a12; margin-left: 4px; vertical-align: middle; }
+  .tag-ring { font-family: 'DM Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 20px; color: var(--danger); border: 0.5px solid #3a2020; background: var(--danger-bg); margin-left: 4px; vertical-align: middle; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+  .metric-value { font-size: 22px; font-weight: 300; font-family: 'DM Mono', monospace; }
+  .action-box { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); overflow: hidden; }
+  .action-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 1.2rem; border-bottom: 0.5px solid var(--border); }
+  .action-row:last-child { border-bottom: none; }
+  .action-row.dimmed { opacity: .5; }
+  .action-label { font-size: 14px; }
+  .action-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .action-amount { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--accent); white-space: nowrap; margin-left: 1rem; }
+  .total-bar { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 14px 1.2rem; margin-top: 12px; }
+  .total-label { font-size: 14px; font-weight: 500; }
+  .total-amount { font-family: 'DM Mono', monospace; font-size: 22px; color: var(--accent); }
+
+
+
+  .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .content-select { width: 100%; padding: 10px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; appearance: none; cursor: pointer; }
+  .content-select:focus { border-color: var(--accent); }
+  .content-textarea { width: 100%; padding: 10px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 80px; line-height: 1.6; }
+  .content-textarea:focus { border-color: var(--accent); }
+  .generate-content-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius); color: #0f0f0f; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .2s; margin-bottom: 1.5rem; }
+  .generate-content-btn:hover { opacity: .88; }
+  .generate-content-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .content-output { display: none; }
+  .content-output.visible { display: block; }
+  .content-section { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.2rem; margin-bottom: 12px; position: relative; }
+  .content-section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--hint); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .content-copy-btn { background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 6px; padding: 3px 10px; font-size: 11px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; }
+  .content-copy-btn:hover { color: var(--text); }
+  .content-result { font-size: 14px; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
+  .pillar-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.5rem; }
+  .pillar-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: pointer; transition: all .15s; text-align: center; }
+  .pillar-card:hover { border-color: var(--border2); }
+  .pillar-card.selected { border-color: var(--accent); background: var(--surface2); }
+  .pillar-card-icon { font-size: 20px; margin-bottom: 4px; }
+  .pillar-card-label { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .pillar-card.selected .pillar-card-label { color: var(--accent); }
+  @media (max-width: 600px) { .content-grid { grid-template-columns: 1fr; } .pillar-cards { grid-template-columns: repeat(2, 1fr); } }
+
+  .check-card { display:flex; align-items:center; justify-content:space-between; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:0.9rem 1.1rem; margin-bottom:10px; transition:all .2s; }
+  .check-card.done { opacity:0.45; }
+  .check-card.done .check-name { text-decoration: line-through; }
+  .check-left { display:flex; align-items:flex-start; gap:12px; flex:1; }
+  .check-btn { background:none; border:none; cursor:pointer; padding:0; flex-shrink:0; margin-top:1px; }
+  .check-icon { font-size:18px; color:var(--hint); transition:all .15s; line-height:1; }
+  .check-card.done .check-icon { color:var(--accent2); }
+  .check-info { flex:1; }
+  .check-name { font-size:14px; font-weight:500; color:var(--text); margin-bottom:3px; }
+  .check-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+  .check-freq { font-family:'DM Mono',monospace; font-size:10px; color:var(--hint); white-space:nowrap; margin-left:12px; flex-shrink:0; }
+
+  .sheet-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.2rem; margin-bottom: 12px; cursor: pointer; transition: border-color .2s; }
+  .sheet-card:hover { border-color: var(--border2); }
+  .sheet-icon { color: var(--accent2); flex-shrink: 0; }
+  .sheet-info { flex: 1; }
+  .sheet-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+  .sheet-url { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .sheet-arrow { font-size: 18px; color: var(--hint); }
+
+  .prompt-box { background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; }
+  .prompt-text { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+  .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 6px; padding: 4px 12px; font-size: 12px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; }
+  .copy-btn:hover { color: var(--text); }
+  .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .date-field label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .04em; display: block; margin-bottom: 4px; }
+  .date-field input[type=date] { width: 100%; padding: 8px 10px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 6px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; }
+  .open-claude-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius); color: #0f0f0f; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .2s; margin-bottom: 1rem; }
+  .open-claude-btn:hover { opacity: .88; }
+  .step-list { counter-reset: steps; }
+  .step-item { display: flex; gap: 14px; margin-bottom: 1rem; align-items: flex-start; }
+  .step-n { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); min-width: 20px; margin-top: 2px; }
+  .step-body { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .step-body strong { color: var(--text); font-weight: 500; }
+  .info-box { background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 0 6px 6px 0; padding: 10px 14px; margin-bottom: 1.5rem; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .info-box strong { color: var(--text); }
+
+  .sop-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+  .sop-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; cursor: pointer; }
+  .sop-header:hover { background: var(--surface2); }
+  .sop-title-wrap { display: flex; align-items: center; gap: 12px; }
+  .sop-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); min-width: 24px; }
+  .sop-title { font-size: 15px; font-weight: 500; }
+  .sop-freq { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--accent); padding: 2px 8px; border: 0.5px solid #3a3020; background: #1e1a10; border-radius: 20px; }
+  .sop-chevron { font-size: 12px; color: var(--hint); transition: transform .2s; }
+  .sop-body { padding: 0 1.2rem 1.2rem 1.2rem; display: none; }
+  .sop-body.open { display: block; }
+  .sop-steps { margin-top: 8px; }
+  .sop-step { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .sop-step-n { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); min-width: 20px; margin-top: 1px; flex-shrink: 0; }
+  .sop-step strong { color: var(--text); }
+  .sop-video { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: 6px; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .sop-video-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+
+  @media (max-width: 600px) {
+    .emp-grid { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+    .page { padding: 1.5rem 1rem; }
+    .date-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <p class="login-logo">NICHOL SMITH DEVELOPMENT</p>
+    <h1 class="login-title">NSD Dashboard</h1>
+    <p class="login-sub">Enter your password to continue</p>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <p class="login-error" id="login-error">Incorrect password. Please try again.</p>
+  </div>
+</div>
+
+<div id="app">
+  <header class="header">
+    <span class="header-logo">NSD</span>
+    <nav class="header-nav">
+      <button class="nav-btn active" onclick="showPage('tasks',this)">Mae's Tasks</button>
+      <button class="nav-btn" onclick="showPage('sops',this)">SOPs</button>
+      <button class="nav-btn" onclick="showPage('payroll',this)">Payroll Calculator</button>
+      <button class="nav-btn" onclick="showPage('report',this)">Report Generator</button>
+      <button class="nav-btn" onclick="showPage('sheets',this)">Spreadsheets</button>
+      <button class="nav-btn" onclick="showPage('pa',this)">PA</button>
+      <button class="nav-btn" onclick="showPage('content',this)">Content</button>
+    </nav>
+    <button class="logout-btn" onclick="doLogout()">log out</button>
+  </header>
+
+  <!-- TASKS -->
+  <div class="page active" id="page-tasks">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem;">
+      <h1 class="page-title">Mae's daily checklist</h1>
+      <button onclick="resetAll()" style="background:transparent;border:0.5px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--hint);cursor:pointer;font-family:'DM Mono',monospace;margin-top:4px;">reset all</button>
+    </div>
+    <p class="page-sub" id="checklist-date"></p>
+
+    <p class="section-label">Daily tasks</p>
+
+    <div class="check-card" id="cc-02">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('02')"><span class="check-icon" id="ci-02">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-02">02 — Receipt reconciliation</p>
+          <p class="check-desc">Log any WhatsApp receipts from Ross into Asana. Scan inbox for receipts. Cross-check against Xero before every invoice. Flag any gaps.</p>
+        </div>
+      </div>
+      <span class="check-freq">Daily</span>
+    </div>
+
+    <div class="check-card" id="cc-05">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('05')"><span class="check-icon" id="ci-05">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-05">05 — Inbox management</p>
+          <p class="check-desc">Scan Ross's inbox. Log receipts. Flag emails needing attention. Draft replies where possible.</p>
+        </div>
+      </div>
+      <span class="check-freq">Daily</span>
+    </div>
+
+    <div class="check-card" id="cc-06">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('06')"><span class="check-icon" id="ci-06">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-06">06 — Site footage check</p>
+          <p class="check-desc">Check Drive folders — confirm new files have been renamed correctly by the script.</p>
+        </div>
+      </div>
+      <span class="check-freq">Daily</span>
+    </div>
+
+    <div class="check-card" id="cc-p1">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('p1')"><span class="check-icon" id="ci-p1">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-p1">P1 — Fitness logging</p>
+          <p class="check-desc">Receive Ross's Apple Health screenshot via WhatsApp. Log all stats into Harry Ranson's app.</p>
+        </div>
+      </div>
+      <span class="check-freq">Daily</span>
+    </div>
+
+    <div class="check-card" id="cc-04v">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('04v')"><span class="check-icon" id="ci-04v">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-04v">04 — Site video received from Sean</p>
+          <p class="check-desc">Confirm Sean's daily site video has been uploaded to the End of Day Report folder in Google Drive by 6:45pm UK. Chase via WhatsApp if not.</p>
+        </div>
+      </div>
+      <span class="check-freq">Daily (Mon–Thu)</span>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Weekly tasks</p>
+
+    <div class="check-card" id="cc-02w">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('02w')"><span class="check-icon" id="ci-02w">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-02w">02 — Supplier account checks</p>
+          <p class="check-desc">Log into Tool Station, Screwfix, Travis Perkins via NordPass. Cross-reference against Asana.</p>
+        </div>
+      </div>
+      <span class="check-freq">Weekly</span>
+    </div>
+
+    <div class="check-card" id="cc-08">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('08')"><span class="check-icon" id="ci-08">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-08">08 — Interiors + materials library</p>
+          <p class="check-desc">Update NST Google Sheet with any new products purchased. Check receipts and voice notes from Ross.</p>
+        </div>
+      </div>
+      <span class="check-freq">Weekly</span>
+    </div>
+
+    <div class="check-card" id="cc-09">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('09')"><span class="check-icon" id="ci-09">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-09">09 — Supplier + contact directory</p>
+          <p class="check-desc">Add any new suppliers or contacts found in Ross's inbox to the NSD Supplier Directory Google Sheet. Update existing records if details have changed.</p>
+        </div>
+      </div>
+      <span class="check-freq">Weekly</span>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Fortnightly tasks</p>
+
+    <div class="check-card" id="cc-04">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('04')"><span class="check-icon" id="ci-04">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-04">04 — NST invoice + progress report</p>
+          <p class="check-desc">Download Sean's videos from the End of Day Report folder in Google Drive → generate report → create Xero invoice → draft email in Ross's inbox.</p>
+        </div>
+      </div>
+      <span class="check-freq">Fortnightly</span>
+    </div>
+
+    <div class="check-card" id="cc-03">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('03')"><span class="check-icon" id="ci-03">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-03">03 — Project cost tracker</p>
+          <p class="check-desc">Update Sundial + Daisy Bank Google Sheets with new invoice costs after each NST invoice.</p>
+        </div>
+      </div>
+      <span class="check-freq">Fortnightly</span>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Monthly tasks</p>
+
+    <div class="check-card" id="cc-01">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('01')"><span class="check-icon" id="ci-01">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-01">01 — Payroll set-aside + payment alerts</p>
+          <p class="check-desc">Receive payslips from Ross (22nd–25th). Run Payroll Calculator. Message Ross the amount to move to tax holding account.</p>
+        </div>
+      </div>
+      <span class="check-freq">Monthly</span>
+    </div>
+
+    <div class="check-card" id="cc-07">
+      <div class="check-left">
+        <button class="check-btn" onclick="toggleCheck('07')"><span class="check-icon" id="ci-07">○</span></button>
+        <div class="check-info">
+          <p class="check-name" id="cn-07">07 — Monthly accounts review</p>
+          <p class="check-desc">When PCO sends the monthly dashboard, schedule Zoom with Ross and Sophie. Mae leads the call.</p>
+        </div>
+      </div>
+      <span class="check-freq">Monthly</span>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;">
+      <p style="font-size:13px;color:var(--muted);">Tasks completed today</p>
+      <p style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);" id="progress-label">0 / 0</p>
+    </div>
+    <div style="height:3px;background:var(--surface2);border-radius:2px;margin-top:6px;">
+      <div id="progress-bar" style="height:100%;background:var(--accent2);border-radius:2px;width:0%;transition:width .3s;"></div>
+    </div>
+  </div>
+
+    <!-- SOPs -->
+  <div class="page" id="page-sops">
+    <h1 class="page-title">Standard operating procedures</h1>
+    <p class="page-sub">Step-by-step guides for every task. For Mae — and anyone who comes after her.</p>
+
+    <p class="section-label">Start here</p>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">00</span><span class="sop-title">How to use this dashboard</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Read first</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>This is the <strong>NSD Dashboard</strong> — your central hub for everything related to your role. It has five sections accessible from the navigation bar at the top: <strong>Mae's Daily Checklist, SOPs, Payroll Calculator, Report Generator, Spreadsheets,</strong> and <strong>PA.</strong></span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span><strong>Start every working day on the Daily Checklist tab.</strong> This shows all your tasks grouped by frequency — Daily, Weekly, Fortnightly, and Monthly. Work through the list and tick off each task as you complete it. The progress bar at the bottom shows how many tasks you've completed today.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Ticks are saved automatically in your browser. If you close the tab and come back, your ticks will still be there. Each morning the previous day's ticks reset and you start fresh.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span><strong>If you're unsure how to complete any task, go to the SOPs tab.</strong> Every task has a numbered SOP with step-by-step instructions. The numbers match — so task 04 in the checklist = SOP 04. Read the SOP, follow the steps, and tick the task when done.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>The <strong>Payroll Calculator</strong> is used once a month when Ross forwards the payslips. Enter the figures from Nathan's and Sean's payslips and the calculator tells you exactly what to do with the money.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>The <strong>Report Generator</strong> is used every fortnight to generate the NST progress report from Sean's site videos. Follow the steps on screen — it walks you through the whole process.</span></div>
+          <div class="sop-step"><span class="sop-step-n">7.</span><span>The <strong>Spreadsheets</strong> tab has direct links to the Google Sheets you'll need to update regularly. Click the card and it opens in a new tab.</span></div>
+          <div class="sop-step"><span class="sop-step-n">8.</span><span>The <strong>PA tab</strong> has Ross's personal tools — including the link to Harry Ranson's fitness app where you log Ross's daily stats.</span></div>
+          <div class="sop-step"><span class="sop-step-n">9.</span><span><strong>The most important rule:</strong> never send emails, make payments, or take any financial action without Ross's explicit approval. Your job is to prepare everything and present it to Ross — he reviews and authorises.</span></div>
+          <div class="sop-step"><span class="sop-step-n">10.</span><span>If anything is unclear, message Ross on WhatsApp. He would always rather you ask than guess.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">Business SOPs</p>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">01</span><span class="sop-title">Monthly payroll set-aside + payment alerts</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Monthly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>Each month (usually around the 22nd–25th), the accountancy company <strong>PCO</strong> sends the payslips to Ross via WhatsApp. Ross will forward these to you.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>Open the <strong>Payroll Calculator</strong> tab in this dashboard.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Using Sean's payslip, enter the following figures exactly as shown: <strong>Net pay, PAYE, Employee NI, Employer NI, Employee pension, Employer pension.</strong></span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Repeat step 3 using Nathan's payslip.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>The calculator will automatically show the exact figure to move to the tax holding account. Message Ross on WhatsApp: <strong>"Hi Ross, this month's payroll set-aside is £[amount]. Please move this to the tax holding account when you get a chance."</strong> Ross can also log into the dashboard himself to see the full breakdown at any time.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>Check the calendar and set reminders 3 days before each upcoming payment deadline: <strong>PAYE + Employee NI + Employer NI</strong> are due to HMRC by the 19th of each month. <strong>CIS</strong> — confirm schedule with Ross. <strong>Smart Pension</strong> is collected automatically by direct debit — leave the employee pension contributions in the current account and do not move them.</span></div>
+          <div class="sop-step"><span class="sop-step-n">7.</span><span>The reminder message to Ross should say: <strong>"Reminder: £[amount] due to HMRC on [date]. Please move from tax holding account to current account before then."</strong></span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">02</span><span class="sop-title">Receipt reconciliation</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Daily + Weekly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span><strong>Daily:</strong> Check WhatsApp for any receipt photos sent by Ross. Log each one into Asana with the amount, supplier, date, and which project it relates to (Sundial or Daisy Bank).</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span><strong>Daily:</strong> Scan Ross's email inbox for any digital receipts or invoices. Forward to Asana or log manually.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span><strong>Weekly:</strong> Log into each supplier account via NordPass and check for any purchases not already in Asana: Tool Station, Screwfix, Travis Perkins (and any others added to the supplier list).</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Cross-reference all receipts in Asana against the project cost tracker in Google Sheets. Everything should match.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span><strong>Before every fortnightly invoice:</strong> Log into <strong>Xero</strong> and check the transaction feed for the past two weeks. Cross-reference every transaction against the receipts logged in Asana. Any transaction in Xero that doesn't have a matching receipt in Asana needs to be investigated — find the receipt, log it, and make sure it gets on the invoice if it's a project cost.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>If anything looks wrong, is missing, or you're unsure whether a transaction should be charged to NST, message Ross immediately before raising the invoice — missed receipts mean NSD pays costs that should be charged to NST.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">03</span><span class="sop-title">Project cost tracker</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Fortnightly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>After each fortnightly invoice is raised to NST, open the <strong>JV Expense Tracker</strong> in the Spreadsheets tab.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>Add a new row with the invoice date, invoice number, materials total, labour total, and invoice total.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Check the running total column has updated correctly.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>This tracker gives Kae (JV partner) visibility on total spend to date. Keep it up to date at all times.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">04</span><span class="sop-title">Fortnightly NST invoice + progress report</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Fortnightly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span><strong>Daily Mon–Thu:</strong> Check the <strong>End of Day Report</strong> folder inside the Sundial project in Google Drive. Sean uploads his daily site walkthrough video directly there. If no video has arrived by 6:45pm UK time, send a polite message to Sean on WhatsApp: "Hi Sean, just checking — has today's site video been uploaded to Drive? Thanks."</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>The script automatically renames the videos each night at 9pm UK time. You do not need to rename them manually.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span><strong>On invoice day (every two weeks):</strong> Go to the End of Day Report folder in Drive and download all videos from the past fortnight to your device.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Go to the <strong>Report Generator</strong> tab in this dashboard. Select the date range for the fortnight. Copy the prompt, open <strong>claude.ai</strong> in a new tab, upload all the fortnight's videos, paste the prompt, and hit send.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>Once Claude generates the report, copy it back into the Report Generator. Fill in the <strong>Materials and larger costs</strong> section using Asana receipts for the fortnight.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>In <strong>Xero</strong>, create the invoice for NST with two line items only: Materials and Labour. The amounts come from the receipts in Asana.</span></div>
+          <div class="sop-step"><span class="sop-step-n">7.</span><span>Open Ross's email inbox. Create a new draft addressed to Kae and Sophie. Paste the progress report as the email body. Attach the Xero invoice PDF. Subject line: <strong>Sundial – Fortnightly Update + Invoice (DD/MM to DD/MM)</strong>.</span></div>
+          <div class="sop-step"><span class="sop-step-n">8.</span><span>Message Ross on WhatsApp: "Invoice email drafted and ready for your review in drafts."</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">05</span><span class="sop-title">Inbox management</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Daily</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>Check Ross's inbox each morning (Philippines morning = UK early hours, so this works well timing-wise).</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>Any receipts or invoices — log to Asana immediately.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Any emails that need Ross's attention — flag them with a star and send Ross a brief WhatsApp summary: "You have 2 emails that need a reply — [brief description]."</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>For routine operational emails (supplier chases, delivery queries, contractor follow-ups, booking confirmations, quote requests) — write and send directly as Ashley. Use Claude to write these emails (see Step 6 below).</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span><strong>Send directly as Ashley for:</strong> supplier chases, delivery queries, contractor scheduling, quote requests, booking confirmations, routine follow-ups. <strong>Draft and flag to Ross for:</strong> anything involving Kae, Sophie, PCO, legal matters, financial commitments, or anything you are unsure about. Message Ross: "I've drafted an email in your inbox — please review when you get a chance."</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span><strong>How to write emails using Claude:</strong> Ross will set up a Claude Pro account for you. When you receive it, open Claude and create a new <strong>Project</strong> called "NSD Emails". Click Project Instructions and paste in the following prompt exactly as written — this sets up Claude to always write in the correct tone and style for NSD:</span></div>
+        </div>
+        <div style="background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:1rem 1.2rem;margin:12px 0;position:relative;">
+          <button onclick="copyClaudePrompt()" style="position:absolute;top:10px;right:10px;background:var(--surface);border:0.5px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'DM Mono',monospace;">Copy</button>
+          <pre id="claude-prompt" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.7;margin:0;">You are helping Ashley Carrington, Executive Assistant at Nichol Smith Development, write emails on behalf of the business.
+
+About the business:
+Nichol Smith Development is a Scottish property renovation company. It is the renovation arm of Nichol Smith Investments, owned by Ross and Sophie McSkimming. The business buys and renovates properties across Scotland, currently converting rundown properties into high-end holiday lets through a joint venture called Nichol Smith &amp; Tinto (NST). Current active project is Sundial. Next project is Daisy Bank.
+
+About Ashley:
+Ashley Carrington is the Executive Assistant. She manages communications, admin, and operations on behalf of Ross. She has full authority to chase suppliers, coordinate contractors, book deliveries, and handle routine operational queries.
+
+Tone of voice:
+- Professional, confident, and warm
+- Direct and concise — no waffle, get to the point quickly
+- Friendly but not overly casual
+- Sounds like someone who knows the business inside out
+- Never apologetic about following up or chasing
+- British English spelling throughout (organise, colour, recognise etc.)
+- Never sounds like it was written by AI
+
+Sign off:
+Always sign off as: Ashley
+(Ashley has an email signature with logo and contact details — do not add anything after "Ashley")
+
+Rules Ashley follows:
+- She can send directly for: delivery chases, booking confirmations, quote requests, scheduling, routine operational queries
+- She drafts and flags to Ross for: anything involving Kae, Sophie, PCO, legal matters, financial commitments, or anything she is unsure about
+- She never makes financial commitments or quotes prices without Ross's explicit instruction
+- She always references the specific project by name (Sundial, Daisy Bank etc.)
+
+When writing an email, tell Claude: who it is going to, their company, what the email is about, and any specific details.</pre>
+        </div>
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">7.</span><span>Every time you need to write an email, open Claude, go to the <strong>NSD Emails</strong> project, start a new chat, and tell Claude what you need. Example: "Write an email to Dylan at Travis Perkins chasing our delivery of skirting boards and architraves for Sundial. They tried to deliver on Friday but nobody was on site. Need a new delivery date." Claude will write the email in Ashley's voice ready to send.</span></div>
+          <div class="sop-step"><span class="sop-step-n">8.</span><span>If Ross sends you a WhatsApp voice note asking you to send an email, listen to it, then follow the same process — open the NSD Emails project in Claude, describe what Ross has asked for, and Claude will write it.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">06</span><span class="sop-title">Daily site footage — Google Drive</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Daily check</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>The renaming is handled automatically by a Google Apps Script that runs every night at 9pm UK time. You do not need to rename files manually.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>Each morning, open the project Drive folder (Video Footage → Sundial) and check that new files uploaded the previous day have been renamed correctly. The format should be: <strong>Video_001 — 2026-05-27 — Bathroom.MOV</strong></span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>If any files are still showing their original phone names (e.g. IMG_4872.MOV), the script may not have run. Message Ross to let him know.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Folder structure: Video Footage → [Project] → [Room] → [Photos / Timelapse / Video] → files. Files must be in the correct room and format subfolder for the script to work.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">07</span><span class="sop-title">Monthly accounts review — Zoom call</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Monthly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>Each month PCO (the accountancy company) sends the financial dashboard to Ross and Sophie by email. When it arrives, open it using the link in the <strong>Spreadsheets</strong> tab (password in NordPass).</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>Review the dashboard yourself first so you understand the figures before the call. You have an accounting background so you should be comfortable reading it — if anything is unclear, note it down as a question for the call.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Schedule a Zoom call with Ross and Sophie within a few days of receiving the dashboard. Message Ross on WhatsApp: <strong>"The PCO monthly dashboard has arrived. When are you and Sophie free for a quick Zoom so I can take you through it?"</strong></span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span><strong>On the call, cover these areas in order:</strong> Overall account health and cash position. Revenue and expenses vs last month. Profit and loss summary. Capital gains tax position — is there a liability building up? Upcoming tax payments — is enough set aside? Any areas of concern or anything that needs Ross's attention.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>The goal of this call is that Ross and Sophie always know exactly where they stand financially. There should be <strong>zero surprises at year end.</strong> If a tax liability is building, flag it early so money can be set aside in time.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>After the call, note down any actions that came out of it and follow up on them. If Ross needs to move money, make a payment, or speak to PCO, send him a WhatsApp reminder.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">08</span><span class="sop-title">NST interiors + materials library</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Weekly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span><strong>Initial setup:</strong> Create a Google Sheet called "NST Interiors & Materials Library". Share it with Ross and add the link to the Spreadsheets tab in this dashboard once created.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>The sheet should have the following columns: Project (Sundial/Daisy Bank), Room, Item, Brand/Supplier, Product Name/Code, Colour/Finish, Where to Buy, Price, Notes.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span><strong>Weekly:</strong> Check Asana for any new receipts logged that week. For any materials or products purchased, add a row to the sheet with all the details you can find from the receipt — supplier, product name, price, and which room it's for.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Ross will occasionally send voice notes via WhatsApp with specific product details that don't appear on receipts — things like paint colour names, tile references, or furniture choices. Log these immediately when received.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>The goal is that by the end of each project, every single product used in the property is documented. When the next property starts, Ross can open this sheet and reorder the same products rather than starting from scratch.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">09</span><span class="sop-title">Supplier + contact directory</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Weekly</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span><strong>Phase 1 — Initial build (first 2-3 weeks):</strong> Go through Ross's inbox and sent emails for the past 12 months. Find every supplier and contractor contact. Create a Google Sheet called <strong>NSD Supplier &amp; Contact Directory</strong> with two separate tabs — one for Suppliers and one for Contractors. Both tabs should have the following columns: Company Name, Main Contact Name, Role, Email, Phone, Account Number (from invoices/receipts if available), and Notes.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span><strong>Suppliers tab</strong> — companies that supply materials. Known suppliers to start with: <strong>Travis Perkins</strong> (Dylan — main contact; Julie — tool hire contact), <strong>St Andrews Timber</strong>, <strong>Tool Station</strong>, <strong>Screwfix</strong>. Add any others found in emails.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span><strong>Contractors tab</strong> — trades and professionals working on site. Known contractors to look for: stonemason, architect, structural engineer, electrician, plumber, plasterer, and any other trades Ross communicates with. Find their contact details from emails and invoices.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Once the initial build is complete, share the Google Sheet with Ross and add the link to the Spreadsheets tab in this dashboard.</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span><strong>Phase 2 — Ongoing maintenance (weekly):</strong> As part of daily inbox management, any time you see an email from a new supplier or contractor, add them to the correct tab immediately. If an existing contact's details change (new phone number, new person to deal with), update their record straight away.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>The goal is that at any point, Ross, Sophie, or Mae can open the directory and find the right person to call within seconds — without having to search through emails.</span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">PA SOPs — personal</p>
+
+    <div class="sop-card">
+      <div class="sop-header" onclick="toggleSop(this)">
+        <div class="sop-title-wrap"><span class="sop-num">P1</span><span class="sop-title">Daily fitness logging</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="sop-freq">Daily</span><span class="sop-chevron">▼</span></div>
+      </div>
+      <div class="sop-body">
+        <div class="sop-steps">
+          <div class="sop-step"><span class="sop-step-n">1.</span><span>At the end of each day, Ross will send <strong>one screenshot of his Apple Health Summary screen</strong> via WhatsApp DM. This single screenshot shows all the data needed: Weight, Steps, Active Energy (calories burned), Dietary Energy (calories consumed), Protein, Carbohydrates, Total Fat, and Fibre.</span></div>
+          <div class="sop-step"><span class="sop-step-n">2.</span><span>From the screenshot, note all the figures for that day.</span></div>
+          <div class="sop-step"><span class="sop-step-n">3.</span><span>Open Harry Ranson's web app using the link in the <strong>PA tab</strong> of this dashboard. Log in using the credentials in NordPass.</span></div>
+          <div class="sop-step"><span class="sop-step-n">4.</span><span>Enter all figures for that day: Protein, Carbohydrates, Fibre, Fat, Calories, Weight, Daily Steps, and Active Energy (exercise calories burned).</span></div>
+          <div class="sop-step"><span class="sop-step-n">5.</span><span>Ross's weekly check-in with Harry is on <strong>Sunday nights</strong>. Make sure Sunday's entry is logged by your Monday morning — you are 7 hours ahead of UK time so this works perfectly. Harry reviews on Monday.</span></div>
+          <div class="sop-step"><span class="sop-step-n">6.</span><span>If Ross hasn't sent his screenshot by 9pm Philippines time, send a gentle reminder via WhatsApp: <strong>"Hi Ross, just a reminder to send today's Apple Health screenshot when you get a chance."</strong></span></div>
+        </div>
+        <div class="sop-video"><span class="sop-video-dot"></span><span>Tutorial video: link to be added by Ross</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYROLL -->
+  <div class="page" id="page-payroll">
+    <h1 class="page-title">Payroll set-aside calculator</h1>
+    <p class="page-sub">Enter figures directly from the payslips each month.</p>
+    <p class="section-label">Enter figures from payslips</p>
+    <div class="emp-grid">
+      <div class="emp-card">
+        <p class="emp-name">Sean Hall</p>
+        <div class="field"><p class="field-label">Net pay (paid to Sean)</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-net" value="3613.38" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">PAYE</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-paye" value="1086.11" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employee NI</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-eni" value="272.17" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employer NI</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-erni" value="722.45" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employee pension <span class="tag-auto">auto direct debit</span></p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-epens" value="261.67" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employer pension <span class="tag-ring">ringfence</span></p><div class="input-wrap"><span class="pound">£</span><input type="number" id="s-erpens" value="157.00" step="0.01" oninput="calc()"></div></div>
+      </div>
+      <div class="emp-card">
+        <p class="emp-name">Nathan Clacmansfield</p>
+        <div class="field"><p class="field-label">Net pay (paid to Nathan)</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-net" value="2790.65" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">PAYE</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-paye" value="494.33" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employee NI</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-eni" value="210.52" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employer NI</p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-erni" value="489.37" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employee pension <span class="tag-auto">auto direct debit</span></p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-epens" value="183.98" step="0.01" oninput="calc()"></div></div>
+        <div class="field"><p class="field-label">Employer pension <span class="tag-ring">ringfence</span></p><div class="input-wrap"><span class="pound">£</span><input type="number" id="n-erpens" value="110.39" step="0.01" oninput="calc()"></div></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <p class="section-label">Monthly summary</p>
+    <div class="summary-grid">
+      <div class="metric"><p class="metric-label">Pay to staff</p><p class="metric-value" id="total-net">—</p></div>
+      <div class="metric"><p class="metric-label">Move to tax holding</p><p class="metric-value" id="total-ringfence">—</p></div>
+    </div>
+    <div class="divider"></div>
+    <p class="section-label">Actions for Mae</p>
+    <div class="action-box">
+      <div class="action-row"><div><p class="action-label">Pay Sean</p><p class="action-sub">Electronic transfer on pay date</p></div><p class="action-amount" id="act-sean">—</p></div>
+      <div class="action-row"><div><p class="action-label">Pay Nathan</p><p class="action-sub">Electronic transfer on pay date</p></div><p class="action-amount" id="act-nathan">—</p></div>
+      <div class="action-row"><div><p class="action-label">Move to tax holding account <span class="tag-ring">HMRC + employer pension</span></p><p class="action-sub">PAYE + Employee NI + Employer NI + Employer pension (both)</p></div><p class="action-amount" id="act-ringfence">—</p></div>
+      <div class="action-row dimmed"><div><p class="action-label">Employee pension <span class="tag-auto">auto direct debit</span></p><p class="action-sub">Collected automatically by Smart Pension — leave in current account</p></div><p class="action-amount" id="act-epens">—</p></div>
+    </div>
+    <div class="total-bar"><p class="total-label">Total cost to NSD this month</p><p class="total-amount" id="act-total">—</p></div>
+  </div>
+
+  <!-- REPORT GENERATOR -->
+  <div class="page" id="page-report">
+    <h1 class="page-title">Fortnightly report generator</h1>
+    <p class="page-sub">Generate the NST progress report from Sean's site videos.</p>
+
+    <p class="section-label">Step 1 — Select the date range</p>
+    <div class="date-grid">
+      <div class="date-field"><label>From</label><input type="date" id="date-from" oninput="updatePrompt()"></div>
+      <div class="date-field"><label>To</label><input type="date" id="date-to" oninput="updatePrompt()"></div>
+    </div>
+
+    <p class="section-label">Step 2 — Transcribe videos in ChatGPT first</p>
+    <div class="info-box">
+      <strong>Before using the prompt below:</strong> Log into Ross's ChatGPT account via NordPass. Go to <strong>Projects → The Tinto Collective → Fortnightly Summary Breakdown</strong>. Start voice chat, play each video through your phone speaker into your laptop mic. Copy the full transcript once all videos are done.
+    </div>
+
+    <p class="section-label">Step 3 — Copy the Claude prompt</p>
+    <div class="prompt-box">
+      <button class="copy-btn" onclick="copyPrompt()">Copy</button>
+      <div class="prompt-text" id="prompt-display"></div>
+    </div>
+
+    <p class="section-label">Step 4 — Open Claude, paste transcript + prompt</p>
+    <div class="info-box">
+      <strong>How to do this:</strong> Click the button below to open Claude. Paste the prompt above, then replace [PASTE TRANSCRIPT HERE] with the full transcript from ChatGPT. Hit send and Claude will generate the report.
+    </div>
+    <button class="open-claude-btn" onclick="window.open('https://claude.ai','_blank')">Open Claude ↗</button>
+
+    <p class="section-label">Step 5 — Paste the generated report here</p>
+    <div class="info-box">Once Claude has generated the report, copy it and paste it below. Then fill in the materials and costs section from Asana before saving to use in the email draft.</div>
+    <textarea id="report-paste" style="width:100%;min-height:300px;background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.2rem;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;line-height:1.8;outline:none;resize:vertical;" placeholder="Paste the Claude-generated report here..."></textarea>
+    <button class="open-claude-btn" style="margin-top:1rem;" onclick="copyFinalReport()">Copy final report</button>
+  </div>
+
+  <!-- SPREADSHEETS -->
+  <div class="page" id="page-sheets">
+    <h1 class="page-title">Spreadsheets</h1>
+    <p class="page-sub">Live Google Sheets — opens in a new tab.</p>
+    <p class="section-label">Business</p>
+    <a href="https://docs.google.com/spreadsheets/d/1koKvljIyw4QQqDcsMNkh4JvweMmVMGYf/edit?pli=1&gid=1610844163#gid=1610844163" target="_blank" style="text-decoration:none;">
+      <div class="sheet-card"><div class="sheet-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1" fill="none"/><line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="1"/><line x1="2" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="1"/><line x1="7" y1="7" x2="7" y2="18" stroke="currentColor" stroke-width="1"/></svg></div><div class="sheet-info"><p class="sheet-name">Job Tracker</p><p class="sheet-url">Google Sheets</p></div><div class="sheet-arrow">→</div></div>
+    </a>
+    <a href="https://docs.google.com/spreadsheets/d/1m_A17iviNtAJw6Wh3qDjmjYgT7M1ArXn/edit?gid=1308097568#gid=1308097568" target="_blank" style="text-decoration:none;">
+      <div class="sheet-card"><div class="sheet-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1" fill="none"/><line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="1"/><line x1="2" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="1"/><line x1="7" y1="7" x2="7" y2="18" stroke="currentColor" stroke-width="1"/></svg></div><div class="sheet-info"><p class="sheet-name">JV Expense Tracker</p><p class="sheet-url">Google Sheets</p></div><div class="sheet-arrow">→</div></div>
+    </a>
+
+    <a href="https://docs.google.com/spreadsheets/d/1tWeCuaPYRZn1hkQg1Nh9Fuk32S0nki7CN1cWkCZI8hQ/edit?gid=1751588799#gid=1751588799" target="_blank" style="text-decoration:none;">
+      <div class="sheet-card"><div class="sheet-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1" fill="none"/><line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" stroke-width="1"/><line x1="2" y1="12" x2="18" y2="12" stroke="currentColor" stroke-width="1"/><line x1="7" y1="7" x2="7" y2="18" stroke="currentColor" stroke-width="1"/></svg></div><div class="sheet-info"><p class="sheet-name">NST Interiors + Materials Library</p><p class="sheet-url">Google Sheets</p></div><div class="sheet-arrow">→</div></div>
+    </a>
+
+    <div class="divider"></div>
+    <p class="section-label">Contacts</p>
+
+    <div class="sheet-card" style="opacity:0.5;cursor:default;">
+      <div class="sheet-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="8" r="3" stroke="currentColor" stroke-width="1" fill="none"/><path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1" stroke-linecap="round" fill="none"/></svg></div>
+      <div class="sheet-info"><p class="sheet-name">NSD Supplier + contact directory</p><p class="sheet-url">⚠ Link to be added by Mae once built</p></div>
+      <div class="sheet-arrow">→</div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="section-label">PCO — accountancy</p>
+
+    <a href="https://propertystrategycom.sharepoint.com/:x:/s/TomesHomesTeam/IQBuhNMVsE-DRJxl_hwOMIe3AT_VtVD5XqgPU18PqSJZdYQ?rtime=zBemzcq83kg" target="_blank" style="text-decoration:none;">
+      <div class="sheet-card"><div class="sheet-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1" fill="none"/><path d="M5 10h10M5 7h10M5 13h6" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg></div><div class="sheet-info"><p class="sheet-name">PCO — monthly financial dashboard</p><p class="sheet-url">SharePoint — URL and password saved in NordPass under 'PCO Financial Dashboard'</p></div><div class="sheet-arrow">→</div></div>
+    </a>
+  </div>
+
+
+  <!-- PA PAGE -->
+  <div class="page" id="page-pa">
+    <h1 class="page-title">PA — personal</h1>
+    <p class="page-sub">Personal tools and links for Ross.</p>
+
+    <p class="section-label">Health + fitness</p>
+
+    <a href="https://studio--apex-nutrition.us-central1.hosted.app/client/b6646b59-b78c-47ff-a4f0-0a3e7e8ca739" target="_blank" style="text-decoration:none;">
+      <div class="sheet-card">
+        <div class="sheet-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1" fill="none"/><path d="M10 6v4l3 2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+        </div>
+        <div class="sheet-info">
+          <p class="sheet-name">Harry Ranson — daily stats</p>
+          <p class="sheet-url">Log calories + steps here each day</p>
+        </div>
+        <div class="sheet-arrow">→</div>
+      </div>
+    </a>
+  </div>
+
+
+  <!-- CONTENT TOOL PAGE -->
+  <div class="page" id="page-content">
+    <h1 class="page-title">Content generator</h1>
+    <p class="page-sub">Fill in the details, copy the prompt, open Claude and paste it in.</p>
+
+    <p class="section-label">Step 1 — Select content pillar</p>
+    <div class="pillar-cards">
+      <div class="pillar-card" onclick="selectPillar(this, 'The Transformation')">
+        <div class="pillar-card-icon">🔄</div>
+        <div class="pillar-card-label">The Transformation</div>
+      </div>
+      <div class="pillar-card" onclick="selectPillar(this, 'The Craft')">
+        <div class="pillar-card-icon">🔨</div>
+        <div class="pillar-card-label">The Craft</div>
+      </div>
+      <div class="pillar-card" onclick="selectPillar(this, 'The Vision')">
+        <div class="pillar-card-icon">🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+        <div class="pillar-card-label">The Vision</div>
+      </div>
+      <div class="pillar-card" onclick="selectPillar(this, 'Behind the Scenes')">
+        <div class="pillar-card-icon">🎬</div>
+        <div class="pillar-card-label">Behind the Scenes</div>
+      </div>
+      <div class="pillar-card" onclick="selectPillar(this, 'The Numbers')">
+        <div class="pillar-card-icon">📊</div>
+        <div class="pillar-card-label">The Numbers</div>
+      </div>
+    </div>
+
+    <p class="section-label">Step 2 — Describe the video</p>
+    <textarea class="content-textarea" id="content-description" placeholder="e.g. Timelapse of the byre being stripped back to stone walls. First time we could see the full space. Really dramatic transformation from a dark old barn to a bright open room." oninput="updateContentPrompt()"></textarea>
+
+    <div class="divider"></div>
+
+    <p class="section-label">Step 3 — Options</p>
+    <div class="content-grid" style="margin-bottom:1.5rem;">
+      <div>
+        <p class="field-label" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:4px;">Room / Area</p>
+        <select class="content-select" id="content-room" onchange="updateContentPrompt()">
+          <option value="">Select room...</option>
+          <option>Byre</option>
+          <option>Kitchen</option>
+          <option>Bathroom</option>
+          <option>En-suite</option>
+          <option>King Sized Bedroom</option>
+          <option>Twin Bedroom</option>
+          <option>Downstairs Bedroom</option>
+          <option>WC</option>
+          <option>Whole property</option>
+          <option>External / Grounds</option>
+        </select>
+      </div>
+      <div>
+        <p class="field-label" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:4px;">Stage</p>
+        <select class="content-select" id="content-stage" onchange="updateContentPrompt()">
+          <option value="">Select stage...</option>
+          <option>Strip out / Demolition</option>
+          <option>Structural works</option>
+          <option>First fix</option>
+          <option>Plastering / Boarding</option>
+          <option>Second fix</option>
+          <option>Tiling</option>
+          <option>Decorating</option>
+          <option>Finishing / Fit out</option>
+          <option>Reveal</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="section-label">Step 4 — Copy prompt and open Claude</p>
+    <div class="prompt-box" style="margin-bottom:1rem;">
+      <button class="copy-btn" onclick="copyContentPrompt()">Copy</button>
+      <div class="prompt-text" id="content-prompt-display">Select a pillar and describe the video above to generate your prompt.</div>
+    </div>
+    <button class="open-claude-btn" onclick="window.open('https://claude.ai','_blank')">Open Claude ↗</button>
+
+    <div class="info-box" style="margin-top:1rem;">
+      <strong>What to do:</strong> Copy the prompt above, open Claude, paste it in and hit send. Claude will generate 5 hook options, a caption in Ross's voice, and 25 hashtags. Copy the output and send to Ross for review.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var PASSWORD = 'nsd12345';
+
+  function doLogin() {
+    if (document.getElementById('pw-input').value === PASSWORD) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      calc(); updatePrompt();
+    } else {
+      document.getElementById('login-error').style.display = 'block';
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('login-error').style.display = 'none';
+  }
+
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('page-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function toggleSop(header) {
+    var body = header.nextElementSibling;
+    var chevron = header.querySelector('.sop-chevron');
+    body.classList.toggle('open');
+    chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+  }
+
+  function fmt(n) { return '£' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+  function calc() {
+    var sNet=v('s-net'),sPaye=v('s-paye'),sEni=v('s-eni'),sErni=v('s-erni'),sEpens=v('s-epens'),sErpens=v('s-erpens');
+    var nNet=v('n-net'),nPaye=v('n-paye'),nEni=v('n-eni'),nErni=v('n-erni'),nEpens=v('n-epens'),nErpens=v('n-erpens');
+    var totalNet=sNet+nNet;
+    var totalRingfence=sPaye+sEni+sErni+sErpens+nPaye+nEni+nErni+nErpens;
+    var totalEpens=sEpens+nEpens;
+    var totalCost=totalNet+totalRingfence+totalEpens;
+    document.getElementById('total-net').textContent=fmt(totalNet);
+    document.getElementById('total-ringfence').textContent=fmt(totalRingfence);
+    document.getElementById('act-sean').textContent=fmt(sNet);
+    document.getElementById('act-nathan').textContent=fmt(nNet);
+    document.getElementById('act-ringfence').textContent=fmt(totalRingfence);
+    document.getElementById('act-epens').textContent=fmt(totalEpens);
+    document.getElementById('act-total').textContent=fmt(totalCost);
+  }
+
+  function updatePrompt() {
+    var df = document.getElementById('date-from').value;
+    var dt = document.getElementById('date-to').value;
+    var dateRange = '';
+    if (df && dt) {
+      var d1 = new Date(df), d2 = new Date(dt);
+      dateRange = d1.toLocaleDateString('en-GB') + ' to ' + d2.toLocaleDateString('en-GB');
+    } else {
+      dateRange = '[ADD DATE RANGE e.g. 15/05/2026 to 28/05/2026]';
+    }
+    var prompt = 'Below is the transcript from Sean\'s daily site walkthrough videos for the fortnight ' + dateRange + '. Please read through all of it and generate a fortnightly progress report email.\n\nProject: Sundial (property renovation in Scotland)\nFrom: Ross (renovation company owner)\nTo: Kae (JV funding partner) and Sophie (co-director)\n\nTone: Warm, professional, and encouraging. Ross and Kae have a close relationship. The email should sound like Ross wrote it himself — natural and conversational but polished. Not overly casual, not corporate.\n\nUse EXACTLY this format and style — this is a real example of how the email should look:\n\n---\nSUBJECT: Sundial – Fortnightly Update + Invoice (' + dateRange + ')\n\nHi both,\n\nA quick update on progress over the last fortnight.\n\n[2-3 sentence warm intro summarising the fortnight — mention it has been productive and highlight the most significant progress]\n\nSundial progress:\n\n[Detailed bullet list of ALL specific works completed — group logically by area or trade. Be thorough and specific. Pull every task mentioned in the transcript.]\n\n[If there is any news about Daisy Bank or other properties mentioned in the transcript, add a separate section for it]\n\nCurrent focus for the next few weeks:\n\n[3-6 bullet points on what is coming up next based on what Sean mentions]\n\nMaterials and larger costs this fortnight:\n\n*** MAE TO FILL IN — check Asana for fortnight receipts and add any significant purchases ***\n\n[1-2 sentence upbeat closing]\n\nAny questions, just shout.\n\nRoss\n---\n\nHere is the transcript:\n\n[PASTE TRANSCRIPT HERE]';
+    document.getElementById('prompt-display').textContent = prompt;
+  }
+
+  function copyPrompt() {
+    var text = document.getElementById('prompt-display').textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(function(){ btn.textContent = 'Copy'; }, 2000);
+    });
+  }
+
+  function copyFinalReport() {
+    var text = document.getElementById('report-paste').value;
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = event.target;
+      btn.textContent = 'Copied!';
+      setTimeout(function(){ btn.textContent = 'Copy final report'; }, 2000);
+    });
+  }
+
+  updatePrompt();
+  var STORAGE_KEY = 'nsd_checks';
+
+  function getTodayKey() {
+    return new Date().toISOString().slice(0,10);
+  }
+
+  function loadChecks() {
+    try {
+      var data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      var today = getTodayKey();
+      return data[today] || {};
+    } catch(e) { return {}; }
+  }
+
+  function saveCheck(id, val) {
+    try {
+      var data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      var today = getTodayKey();
+      if (!data[today]) data[today] = {};
+      data[today][id] = val;
+      // Keep only last 7 days
+      var keys = Object.keys(data).sort();
+      while (keys.length > 7) { delete data[keys.shift()]; keys = Object.keys(data).sort(); }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e) {}
+  }
+
+  function toggleCheck(id) {
+    var checks = loadChecks();
+    var newVal = !checks[id];
+    saveCheck(id, newVal);
+    renderChecks();
+  }
+
+  function resetAll() {
+    try {
+      var data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      var today = getTodayKey();
+      data[today] = {};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e) {}
+    renderChecks();
+  }
+
+  function renderChecks() {
+    var checks = loadChecks();
+    var ids = ['02','05','06','p1','04v','02w','08','09','04','03','01','07'];
+    var done = 0;
+    ids.forEach(function(id) {
+      var card = document.getElementById('cc-' + id);
+      var icon = document.getElementById('ci-' + id);
+      if (!card || !icon) return;
+      if (checks[id]) {
+        card.classList.add('done');
+        icon.textContent = '●';
+        done++;
+      } else {
+        card.classList.remove('done');
+        icon.textContent = '○';
+      }
+    });
+    var total = ids.length;
+    document.getElementById('progress-label').textContent = done + ' / ' + total;
+    document.getElementById('progress-bar').style.width = Math.round((done/total)*100) + '%';
+  }
+
+  function setChecklistDate() {
+    var el = document.getElementById('checklist-date');
+    if (!el) return;
+    var d = new Date();
+    var opts = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
+    el.textContent = d.toLocaleDateString('en-GB', opts);
+  }
+
+  setChecklistDate();
+  renderChecks();
+
+  function copyClaudePrompt() {
+    var text = document.getElementById('claude-prompt').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      var btns = document.querySelectorAll('button');
+      btns.forEach(function(btn) {
+        if (btn.textContent === 'Copy') {
+          btn.textContent = 'Copied!';
+          setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+        }
+      });
+    });
+  }
+
+  var selectedPillar = '';
+
+  function selectPillar(el, pillar) {
+    document.querySelectorAll('.pillar-card').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedPillar = pillar;
+    updateContentPrompt();
+  }
+
+  function updateContentPrompt() {
+    var display = document.getElementById('content-prompt-display');
+    if (!display) return;
+    var desc = document.getElementById('content-description').value.trim();
+    var room = document.getElementById('content-room').value;
+    var stage = document.getElementById('content-stage').value;
+
+    if (!selectedPillar || !desc) {
+      display.textContent = 'Select a pillar and describe the video above to generate your prompt.';
+      return;
+    }
+
+    var context = desc;
+    if (room) context += ' Room/area: ' + room + '.';
+    if (stage) context += ' Stage: ' + stage + '.';
+
+    display.textContent = 'You are generating Instagram content ideas for Nichol Smith Development (@renovation.dream.home on Instagram). The account belongs to Ross McSkimming, a Scottish property developer who renovates high-end properties in Scotland, converting them into luxury boutique holiday lets under the Tinto Collective brand.\n\nRoss\'s tone: Real, confident, fun, not corporate or boring. Scottish but not clichéd. Behind the scenes of luxury renovation. He wants to attract future investors and build authority as a quality developer. Think less "tradesman" more "I know exactly what I\'m doing and here\'s proof."\n\nReference accounts for tone/style: @no14hectorshouse, @hatfield__house, @dunsinnan, @chrislovesjulia\n\nContent pillar: ' + selectedPillar + '\n\nVideo description: ' + context + '\n\nPlease generate:\n\n1. HOOK OPTIONS (5 options for the first 3 seconds of the video)\nMix styles — question, statement, reveal tease, before/after tease, bold claim. Each hook should be punchy, max 10 words, designed to stop the scroll.\n\n2. CAPTION\n3-5 sentences. Tells the story, feels personal, ends with a question or CTA to drive comments. Sounds like Ross wrote it himself.\n\n3. HASHTAGS\n20-25 relevant hashtags covering renovation, Scottish property, luxury interiors, holiday lets, investment property. Mix big and niche tags.';
+  }
+
+  function copyContentPrompt() {
+    var text = document.getElementById('content-prompt-display').textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.querySelector('.prompt-box .copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+    });
+  }
+
+</script>
+</body>
+</html>
