@@ -196,6 +196,33 @@
     .page { padding: 1.5rem 1rem; }
     .date-grid { grid-template-columns: 1fr; }
   }
+
+  .calc-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; }
+  .calc-field { margin-bottom: 1.1rem; }
+  .calc-field label { display: block; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .04em; margin-bottom: 6px; }
+  .calc-input { width: 100%; padding: 10px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px; outline: none; transition: border-color .2s; }
+  .calc-input:focus { border-color: var(--accent); }
+  .calc-results { background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); overflow: hidden; margin-top: 1.5rem; display: none; }
+  .calc-results.visible { display: block; }
+  .calc-result-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 1.2rem; border-bottom: 0.5px solid var(--border); }
+  .calc-result-row:last-child { border-bottom: none; }
+  .calc-result-label { font-size: 14px; color: var(--muted); }
+  .calc-result-val { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text); }
+  .calc-result-row.highlight { background: var(--surface); }
+  .calc-result-row.highlight .calc-result-label { color: var(--text); font-weight: 500; }
+  .calc-result-row.highlight .calc-result-val { color: var(--accent); font-size: 20px; }
+  .calc-result-row.deduction .calc-result-val { color: var(--danger); }
+  .rate-pills { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+  .rate-pill { flex: 1; padding: 10px 8px; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); text-align: center; cursor: pointer; transition: all .15s; }
+  .rate-pill:hover { border-color: var(--accent); }
+  .rate-pill.active { border-color: var(--accent); background: var(--surface2); }
+  .rate-pill-rate { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text); }
+  .rate-pill-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .rate-pill.active .rate-pill-rate { color: var(--accent); }
+  .vat-toggle { display: flex; gap: 8px; margin-bottom: 1.1rem; }
+  .vat-toggle-btn { flex: 1; padding: 10px; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--muted); cursor: pointer; transition: all .15s; }
+  .vat-toggle-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--text); }
+  .calc-info-box { background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 0 6px 6px 0; padding: 10px 14px; margin-bottom: 1.5rem; font-size: 12px; color: var(--muted); line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -223,8 +250,7 @@
       <button class="nav-btn" onclick="showPage('pa',this)">PA</button>
       <button class="nav-btn" onclick="showPage('content',this)">Content</button>
       <button class="nav-btn" onclick="showPage('bbl',this)">Loans</button>
-      <button class="nav-btn" onclick="showPage('cis',this)">CIS</button>
-      <button class="nav-btn" onclick="showPage('vat',this)">VAT</button>
+      <button class="nav-btn" onclick="showPage('cis',this)">CIS & VAT</button>
     </nav>
     <button class="logout-btn" onclick="doLogout()">log out</button>
   </header>
@@ -1304,45 +1330,15 @@ When writing an email, tell Claude: who it is going to, their company, what the 
   document.addEventListener("DOMContentLoaded", function() { if(typeof bblRecalc === "function") bblRecalc(); });
 </script>
 
-<!-- CIS CALCULATOR PAGE -->
-<style>
-  .calc-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1.5rem; }
-  .calc-field { margin-bottom: 1.1rem; }
-  .calc-field label { display: block; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .04em; margin-bottom: 6px; }
-  .calc-input { width: 100%; padding: 10px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Mono', monospace; font-size: 15px; outline: none; transition: border-color .2s; }
-  .calc-input:focus { border-color: var(--accent); }
-  .calc-select { width: 100%; padding: 10px 12px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; appearance: none; cursor: pointer; }
-  .calc-select:focus { border-color: var(--accent); }
-  .calc-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: var(--radius); color: #0f0f0f; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .2s; margin-top: 4px; }
-  .calc-btn:hover { opacity: .88; }
-  .calc-results { background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-lg); overflow: hidden; margin-top: 1.5rem; display: none; }
-  .calc-results.visible { display: block; }
-  .calc-result-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 1.2rem; border-bottom: 0.5px solid var(--border); }
-  .calc-result-row:last-child { border-bottom: none; }
-  .calc-result-label { font-size: 14px; color: var(--muted); }
-  .calc-result-val { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text); }
-  .calc-result-row.highlight { background: var(--surface); }
-  .calc-result-row.highlight .calc-result-label { color: var(--text); font-weight: 500; }
-  .calc-result-row.highlight .calc-result-val { color: var(--accent); font-size: 20px; }
-  .calc-result-row.deduction .calc-result-val { color: var(--danger); }
-  .rate-pills { display: flex; gap: 8px; margin-bottom: 1.5rem; }
-  .rate-pill { flex: 1; padding: 10px 8px; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); text-align: center; cursor: pointer; transition: all .15s; }
-  .rate-pill:hover { border-color: var(--accent); }
-  .rate-pill.active { border-color: var(--accent); background: var(--surface2); }
-  .rate-pill-rate { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--text); }
-  .rate-pill-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
-  .rate-pill.active .rate-pill-rate { color: var(--accent); }
-  .vat-toggle { display: flex; gap: 8px; margin-bottom: 1.1rem; }
-  .vat-toggle-btn { flex: 1; padding: 10px; background: var(--surface); border: 0.5px solid var(--border2); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--muted); cursor: pointer; transition: all .15s; }
-  .vat-toggle-btn.active { background: var(--surface2); border-color: var(--accent); color: var(--text); }
-  .calc-info-box { background: var(--surface2); border-left: 2px solid var(--accent); border-radius: 0 6px 6px 0; padding: 10px 14px; margin-bottom: 1.5rem; font-size: 12px; color: var(--muted); line-height: 1.7; }
-</style>
 
+<!-- CIS & VAT CALCULATORS -->
 <div class="page" id="page-cis">
-  <h1 class="page-title">CIS calculator</h1>
-  <p class="page-sub">Construction Industry Scheme — tax deduction on labour.</p>
+  <h1 class="page-title">CIS & VAT calculators</h1>
+  <p class="page-sub">Construction Industry Scheme deductions and VAT on one page.</p>
 
-  <p class="section-label">Deduction rate</p>
+  <!-- CIS SECTION -->
+  <hr class="divider" style="margin-top:0;">
+  <p class="section-label">CIS — deduction rate</p>
   <div class="rate-pills">
     <div class="rate-pill active" id="cis-pill-20" onclick="setCisRate(20)">
       <div class="rate-pill-rate">20%</div>
@@ -1357,11 +1353,9 @@ When writing an email, tell Claude: who it is going to, their company, what the 
       <div class="rate-pill-label">Gross payment status</div>
     </div>
   </div>
-
   <div class="calc-info-box">
     CIS is deducted on <strong>labour only</strong>. Materials are excluded — enter them separately and they pass through at full value.
   </div>
-
   <div class="calc-card">
     <div class="calc-field">
       <label>TOTAL INVOICE AMOUNT (£)</label>
@@ -1371,59 +1365,29 @@ When writing an email, tell Claude: who it is going to, their company, what the 
       <label>MATERIALS INCLUDED IN INVOICE (£)</label>
       <input class="calc-input" type="number" id="cis-materials" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
     </div>
-    <div class="calc-field">
+    <div class="calc-field" style="margin-bottom:0;">
       <label>VAT ON INVOICE (£) — if applicable</label>
       <input class="calc-input" type="number" id="cis-vat" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
     </div>
   </div>
-
   <div class="calc-results" id="cis-results">
-    <div class="calc-result-row">
-      <span class="calc-result-label">Total invoice</span>
-      <span class="calc-result-val" id="cr-total">£0.00</span>
-    </div>
-    <div class="calc-result-row">
-      <span class="calc-result-label">Less: VAT</span>
-      <span class="calc-result-val" id="cr-vat">£0.00</span>
-    </div>
-    <div class="calc-result-row">
-      <span class="calc-result-label">Net invoice (ex. VAT)</span>
-      <span class="calc-result-val" id="cr-net">£0.00</span>
-    </div>
-    <div class="calc-result-row">
-      <span class="calc-result-label">Materials (not subject to CIS)</span>
-      <span class="calc-result-val" id="cr-mats">£0.00</span>
-    </div>
-    <div class="calc-result-row">
-      <span class="calc-result-label">Labour (subject to CIS)</span>
-      <span class="calc-result-val" id="cr-labour">£0.00</span>
-    </div>
-    <div class="calc-result-row deduction">
-      <span class="calc-result-label">CIS deduction (<span id="cr-rate-label">20%</span>)</span>
-      <span class="calc-result-val" id="cr-deduction">−£0.00</span>
-    </div>
-    <div class="calc-result-row highlight">
-      <span class="calc-result-label">Amount to pay subcontractor</span>
-      <span class="calc-result-val" id="cr-pay">£0.00</span>
-    </div>
-    <div class="calc-result-row highlight" style="background:var(--danger-bg);">
-      <span class="calc-result-label" style="color:var(--danger);">Amount to pay HMRC</span>
-      <span class="calc-result-val" style="color:var(--danger);" id="cr-hmrc">£0.00</span>
-    </div>
+    <div class="calc-result-row"><span class="calc-result-label">Total invoice</span><span class="calc-result-val" id="cr-total">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Less: VAT</span><span class="calc-result-val" id="cr-vat">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Net invoice (ex. VAT)</span><span class="calc-result-val" id="cr-net">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Materials (not subject to CIS)</span><span class="calc-result-val" id="cr-mats">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Labour (subject to CIS)</span><span class="calc-result-val" id="cr-labour">£0.00</span></div>
+    <div class="calc-result-row deduction"><span class="calc-result-label">CIS deduction (<span id="cr-rate-label">20%</span>)</span><span class="calc-result-val" id="cr-deduction">−£0.00</span></div>
+    <div class="calc-result-row highlight"><span class="calc-result-label">Amount to pay subcontractor</span><span class="calc-result-val" id="cr-pay">£0.00</span></div>
+    <div class="calc-result-row highlight" style="background:var(--danger-bg);"><span class="calc-result-label" style="color:var(--danger);">Amount to pay HMRC</span><span class="calc-result-val" style="color:var(--danger);" id="cr-hmrc">£0.00</span></div>
   </div>
-</div>
 
-<!-- VAT CALCULATOR PAGE -->
-<div class="page" id="page-vat">
-  <h1 class="page-title">VAT calculator</h1>
-  <p class="page-sub">Add or remove VAT at standard, reduced, or zero rate.</p>
-
-  <p class="section-label">What do you want to do?</p>
+  <!-- VAT SECTION -->
+  <hr class="divider">
+  <p class="section-label">VAT — what do you want to do?</p>
   <div class="vat-toggle">
     <button class="vat-toggle-btn active" id="vat-add-btn" onclick="setVatMode('add')">➕ Add VAT to net amount</button>
     <button class="vat-toggle-btn" id="vat-remove-btn" onclick="setVatMode('remove')">➖ Remove VAT from gross amount</button>
   </div>
-
   <p class="section-label">VAT rate</p>
   <div class="rate-pills">
     <div class="rate-pill active" id="vat-pill-20" onclick="setVatRate(20)">
@@ -1439,27 +1403,16 @@ When writing an email, tell Claude: who it is going to, their company, what the 
       <div class="rate-pill-label">Zero rated</div>
     </div>
   </div>
-
   <div class="calc-card">
-    <div class="calc-field">
+    <div class="calc-field" style="margin-bottom:0;">
       <label id="vat-input-label">NET AMOUNT (ex. VAT) (£)</label>
       <input class="calc-input" type="number" id="vat-amount" placeholder="0.00" oninput="vatCalc()" min="0" step="0.01">
     </div>
   </div>
-
   <div class="calc-results" id="vat-results">
-    <div class="calc-result-row">
-      <span class="calc-result-label" id="vr-net-label">Net amount (ex. VAT)</span>
-      <span class="calc-result-val" id="vr-net">£0.00</span>
-    </div>
-    <div class="calc-result-row deduction">
-      <span class="calc-result-label">VAT (<span id="vr-rate-label">20%</span>)</span>
-      <span class="calc-result-val" id="vr-vat">£0.00</span>
-    </div>
-    <div class="calc-result-row highlight">
-      <span class="calc-result-label" id="vr-gross-label">Gross amount (inc. VAT)</span>
-      <span class="calc-result-val" id="vr-gross">£0.00</span>
-    </div>
+    <div class="calc-result-row"><span class="calc-result-label" id="vr-net-label">Net amount (ex. VAT)</span><span class="calc-result-val" id="vr-net">£0.00</span></div>
+    <div class="calc-result-row deduction"><span class="calc-result-label">VAT (<span id="vr-rate-label">20%</span>)</span><span class="calc-result-val" id="vr-vat">£0.00</span></div>
+    <div class="calc-result-row highlight"><span class="calc-result-label" id="vr-gross-label">Gross amount (inc. VAT)</span><span class="calc-result-val" id="vr-gross">£0.00</span></div>
   </div>
 </div>
 
