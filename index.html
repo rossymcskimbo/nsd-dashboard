@@ -960,6 +960,94 @@ When writing an email, tell Claude: who it is going to, their company, what the 
     </div>
   </div>
 
+  <!-- CIS & VAT CALCULATORS (moved inside #app) -->
+
+
+<!-- CIS & VAT CALCULATORS -->
+<div class="page" id="page-cis">
+  <h1 class="page-title">CIS & VAT calculators</h1>
+  <p class="page-sub">Construction Industry Scheme deductions and VAT on one page.</p>
+
+  <!-- CIS SECTION -->
+  <hr class="divider" style="margin-top:0;">
+  <p class="section-label">CIS — deduction rate</p>
+  <div class="rate-pills">
+    <div class="rate-pill active" id="cis-pill-20" onclick="setCisRate(20)">
+      <div class="rate-pill-rate">20%</div>
+      <div class="rate-pill-label">Registered subcontractor</div>
+    </div>
+    <div class="rate-pill" id="cis-pill-30" onclick="setCisRate(30)">
+      <div class="rate-pill-rate">30%</div>
+      <div class="rate-pill-label">Unregistered / unverified</div>
+    </div>
+    <div class="rate-pill" id="cis-pill-0" onclick="setCisRate(0)">
+      <div class="rate-pill-rate">0%</div>
+      <div class="rate-pill-label">Gross payment status</div>
+    </div>
+  </div>
+  <div class="calc-info-box">
+    CIS is deducted on <strong>labour only</strong>. Materials are excluded — enter them separately and they pass through at full value.
+  </div>
+  <div class="calc-card">
+    <div class="calc-field">
+      <label>TOTAL INVOICE AMOUNT (£)</label>
+      <input class="calc-input" type="number" id="cis-total" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
+    </div>
+    <div class="calc-field">
+      <label>MATERIALS INCLUDED IN INVOICE (£)</label>
+      <input class="calc-input" type="number" id="cis-materials" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
+    </div>
+    <div class="calc-field" style="margin-bottom:0;">
+      <label>VAT ON INVOICE (£) — if applicable</label>
+      <input class="calc-input" type="number" id="cis-vat" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
+    </div>
+  </div>
+  <div class="calc-results" id="cis-results">
+    <div class="calc-result-row"><span class="calc-result-label">Total invoice</span><span class="calc-result-val" id="cr-total">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Less: VAT</span><span class="calc-result-val" id="cr-vat">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Net invoice (ex. VAT)</span><span class="calc-result-val" id="cr-net">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Materials (not subject to CIS)</span><span class="calc-result-val" id="cr-mats">£0.00</span></div>
+    <div class="calc-result-row"><span class="calc-result-label">Labour (subject to CIS)</span><span class="calc-result-val" id="cr-labour">£0.00</span></div>
+    <div class="calc-result-row deduction"><span class="calc-result-label">CIS deduction (<span id="cr-rate-label">20%</span>)</span><span class="calc-result-val" id="cr-deduction">−£0.00</span></div>
+    <div class="calc-result-row highlight"><span class="calc-result-label">Amount to pay subcontractor</span><span class="calc-result-val" id="cr-pay">£0.00</span></div>
+    <div class="calc-result-row highlight" style="background:var(--danger-bg);"><span class="calc-result-label" style="color:var(--danger);">Amount to pay HMRC</span><span class="calc-result-val" style="color:var(--danger);" id="cr-hmrc">£0.00</span></div>
+  </div>
+
+  <!-- VAT SECTION -->
+  <hr class="divider">
+  <p class="section-label">VAT — what do you want to do?</p>
+  <div class="vat-toggle">
+    <button class="vat-toggle-btn active" id="vat-add-btn" onclick="setVatMode('add')">➕ Add VAT to net amount</button>
+    <button class="vat-toggle-btn" id="vat-remove-btn" onclick="setVatMode('remove')">➖ Remove VAT from gross amount</button>
+  </div>
+  <p class="section-label">VAT rate</p>
+  <div class="rate-pills">
+    <div class="rate-pill active" id="vat-pill-20" onclick="setVatRate(20)">
+      <div class="rate-pill-rate">20%</div>
+      <div class="rate-pill-label">Standard rate</div>
+    </div>
+    <div class="rate-pill" id="vat-pill-5" onclick="setVatRate(5)">
+      <div class="rate-pill-rate">5%</div>
+      <div class="rate-pill-label">Reduced rate</div>
+    </div>
+    <div class="rate-pill" id="vat-pill-0" onclick="setVatRate(0)">
+      <div class="rate-pill-rate">0%</div>
+      <div class="rate-pill-label">Zero rated</div>
+    </div>
+  </div>
+  <div class="calc-card">
+    <div class="calc-field" style="margin-bottom:0;">
+      <label id="vat-input-label">NET AMOUNT (ex. VAT) (£)</label>
+      <input class="calc-input" type="number" id="vat-amount" placeholder="0.00" oninput="vatCalc()" min="0" step="0.01">
+    </div>
+  </div>
+  <div class="calc-results" id="vat-results">
+    <div class="calc-result-row"><span class="calc-result-label" id="vr-net-label">Net amount (ex. VAT)</span><span class="calc-result-val" id="vr-net">£0.00</span></div>
+    <div class="calc-result-row deduction"><span class="calc-result-label">VAT (<span id="vr-rate-label">20%</span>)</span><span class="calc-result-val" id="vr-vat">£0.00</span></div>
+    <div class="calc-result-row highlight"><span class="calc-result-label" id="vr-gross-label">Gross amount (inc. VAT)</span><span class="calc-result-val" id="vr-gross">£0.00</span></div>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -1329,93 +1417,6 @@ When writing an email, tell Claude: who it is going to, their company, what the 
 <script>
   document.addEventListener("DOMContentLoaded", function() { if(typeof bblRecalc === "function") bblRecalc(); });
 </script>
-
-
-<!-- CIS & VAT CALCULATORS -->
-<div class="page" id="page-cis">
-  <h1 class="page-title">CIS & VAT calculators</h1>
-  <p class="page-sub">Construction Industry Scheme deductions and VAT on one page.</p>
-
-  <!-- CIS SECTION -->
-  <hr class="divider" style="margin-top:0;">
-  <p class="section-label">CIS — deduction rate</p>
-  <div class="rate-pills">
-    <div class="rate-pill active" id="cis-pill-20" onclick="setCisRate(20)">
-      <div class="rate-pill-rate">20%</div>
-      <div class="rate-pill-label">Registered subcontractor</div>
-    </div>
-    <div class="rate-pill" id="cis-pill-30" onclick="setCisRate(30)">
-      <div class="rate-pill-rate">30%</div>
-      <div class="rate-pill-label">Unregistered / unverified</div>
-    </div>
-    <div class="rate-pill" id="cis-pill-0" onclick="setCisRate(0)">
-      <div class="rate-pill-rate">0%</div>
-      <div class="rate-pill-label">Gross payment status</div>
-    </div>
-  </div>
-  <div class="calc-info-box">
-    CIS is deducted on <strong>labour only</strong>. Materials are excluded — enter them separately and they pass through at full value.
-  </div>
-  <div class="calc-card">
-    <div class="calc-field">
-      <label>TOTAL INVOICE AMOUNT (£)</label>
-      <input class="calc-input" type="number" id="cis-total" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
-    </div>
-    <div class="calc-field">
-      <label>MATERIALS INCLUDED IN INVOICE (£)</label>
-      <input class="calc-input" type="number" id="cis-materials" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
-    </div>
-    <div class="calc-field" style="margin-bottom:0;">
-      <label>VAT ON INVOICE (£) — if applicable</label>
-      <input class="calc-input" type="number" id="cis-vat" placeholder="0.00" oninput="cisCalc()" min="0" step="0.01">
-    </div>
-  </div>
-  <div class="calc-results" id="cis-results">
-    <div class="calc-result-row"><span class="calc-result-label">Total invoice</span><span class="calc-result-val" id="cr-total">£0.00</span></div>
-    <div class="calc-result-row"><span class="calc-result-label">Less: VAT</span><span class="calc-result-val" id="cr-vat">£0.00</span></div>
-    <div class="calc-result-row"><span class="calc-result-label">Net invoice (ex. VAT)</span><span class="calc-result-val" id="cr-net">£0.00</span></div>
-    <div class="calc-result-row"><span class="calc-result-label">Materials (not subject to CIS)</span><span class="calc-result-val" id="cr-mats">£0.00</span></div>
-    <div class="calc-result-row"><span class="calc-result-label">Labour (subject to CIS)</span><span class="calc-result-val" id="cr-labour">£0.00</span></div>
-    <div class="calc-result-row deduction"><span class="calc-result-label">CIS deduction (<span id="cr-rate-label">20%</span>)</span><span class="calc-result-val" id="cr-deduction">−£0.00</span></div>
-    <div class="calc-result-row highlight"><span class="calc-result-label">Amount to pay subcontractor</span><span class="calc-result-val" id="cr-pay">£0.00</span></div>
-    <div class="calc-result-row highlight" style="background:var(--danger-bg);"><span class="calc-result-label" style="color:var(--danger);">Amount to pay HMRC</span><span class="calc-result-val" style="color:var(--danger);" id="cr-hmrc">£0.00</span></div>
-  </div>
-
-  <!-- VAT SECTION -->
-  <hr class="divider">
-  <p class="section-label">VAT — what do you want to do?</p>
-  <div class="vat-toggle">
-    <button class="vat-toggle-btn active" id="vat-add-btn" onclick="setVatMode('add')">➕ Add VAT to net amount</button>
-    <button class="vat-toggle-btn" id="vat-remove-btn" onclick="setVatMode('remove')">➖ Remove VAT from gross amount</button>
-  </div>
-  <p class="section-label">VAT rate</p>
-  <div class="rate-pills">
-    <div class="rate-pill active" id="vat-pill-20" onclick="setVatRate(20)">
-      <div class="rate-pill-rate">20%</div>
-      <div class="rate-pill-label">Standard rate</div>
-    </div>
-    <div class="rate-pill" id="vat-pill-5" onclick="setVatRate(5)">
-      <div class="rate-pill-rate">5%</div>
-      <div class="rate-pill-label">Reduced rate</div>
-    </div>
-    <div class="rate-pill" id="vat-pill-0" onclick="setVatRate(0)">
-      <div class="rate-pill-rate">0%</div>
-      <div class="rate-pill-label">Zero rated</div>
-    </div>
-  </div>
-  <div class="calc-card">
-    <div class="calc-field" style="margin-bottom:0;">
-      <label id="vat-input-label">NET AMOUNT (ex. VAT) (£)</label>
-      <input class="calc-input" type="number" id="vat-amount" placeholder="0.00" oninput="vatCalc()" min="0" step="0.01">
-    </div>
-  </div>
-  <div class="calc-results" id="vat-results">
-    <div class="calc-result-row"><span class="calc-result-label" id="vr-net-label">Net amount (ex. VAT)</span><span class="calc-result-val" id="vr-net">£0.00</span></div>
-    <div class="calc-result-row deduction"><span class="calc-result-label">VAT (<span id="vr-rate-label">20%</span>)</span><span class="calc-result-val" id="vr-vat">£0.00</span></div>
-    <div class="calc-result-row highlight"><span class="calc-result-label" id="vr-gross-label">Gross amount (inc. VAT)</span><span class="calc-result-val" id="vr-gross">£0.00</span></div>
-  </div>
-</div>
-
 <script>
   // ── CIS ──────────────────────────────────────────────
   var cisRate = 20;
